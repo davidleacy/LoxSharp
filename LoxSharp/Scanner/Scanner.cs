@@ -1,4 +1,6 @@
-﻿namespace LoxSharp;
+﻿using LoxSharp.Extensions;
+
+namespace LoxSharp.Scanner;
 
 internal class Scanner
 {
@@ -110,7 +112,7 @@ internal class Scanner
                 IdentifierAndKeywordScan();
                 break;
             default:
-                LoxSharp.Error(Line, "Unexpected character.");
+                Program.Error(Line, "Unexpected character.");
                 break;
         }
     }
@@ -129,7 +131,7 @@ internal class Scanner
 
         // Reached EOF in the middle of a string which is a syntax error.
         if (IsAtEnd()) {
-          LoxSharp.Error(Line, "Unterminated string.");
+          Program.Error(Line, "Unterminated string.");
           return;
         }
 

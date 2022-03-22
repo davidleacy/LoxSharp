@@ -5,6 +5,10 @@ VisualStudioVersion = 17.1.32228.430
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "LoxSharp", "LoxSharp\LoxSharp.csproj", "{3D965CED-27F5-4747-83FD-C992D38AF83B}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LoxSharp.GenerateAst", "LoxSharp.GenerateAst\LoxSharp.GenerateAst.csproj", "{8CF9EBB2-A1B5-46A0-90E0-F10B3DE7F245}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "LoxSharp.AstPrinter", "LoxSharp.AstPrinter\LoxSharp.AstPrinter.csproj", "{06E4B91A-160C-4773-BA5E-A62E21E6B8CF}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +19,14 @@ Global
 		{3D965CED-27F5-4747-83FD-C992D38AF83B}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{3D965CED-27F5-4747-83FD-C992D38AF83B}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{3D965CED-27F5-4747-83FD-C992D38AF83B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{8CF9EBB2-A1B5-46A0-90E0-F10B3DE7F245}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{8CF9EBB2-A1B5-46A0-90E0-F10B3DE7F245}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{8CF9EBB2-A1B5-46A0-90E0-F10B3DE7F245}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{8CF9EBB2-A1B5-46A0-90E0-F10B3DE7F245}.Release|Any CPU.Build.0 = Release|Any CPU
+		{06E4B91A-160C-4773-BA5E-A62E21E6B8CF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{06E4B91A-160C-4773-BA5E-A62E21E6B8CF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{06E4B91A-160C-4773-BA5E-A62E21E6B8CF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{06E4B91A-160C-4773-BA5E-A62E21E6B8CF}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

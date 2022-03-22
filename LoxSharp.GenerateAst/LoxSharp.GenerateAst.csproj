@@ -7,12 +7,4 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
 
-  <ItemGroup>
-    <Folder Include="AbstractSyntaxTrees\" />
-  </ItemGroup>
-
-  <ItemGroup>
-	<InternalsVisibleTo Include="LoxSharp.AstPrinter" />
-  </ItemGroup>
-	
 </Project>

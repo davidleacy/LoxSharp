@@ -3,7 +3,7 @@
 using System.Text;
 using static System.FormattableString;
 
-public class LoxSharp
+public class Program
 {
     public static bool HadError { get; set; } = false;
 
@@ -68,7 +68,7 @@ public class LoxSharp
     /// <param name="source">The source code to be ran.</param>
     private static void Run(string source)
     {
-        Scanner scanner = new Scanner(source);
+        Scanner.Scanner scanner = new Scanner.Scanner(source);
         List<Token> tokens = scanner.ScanTokens();
 
         // For now, just print the tokens.
@@ -80,7 +80,7 @@ public class LoxSharp
 
     public static void Error(int line, string message)
     {
-        Report(line, "", message);
+        Report(line, string.Empty, message);
     }
 
     private static void Report(
@@ -88,7 +88,7 @@ public class LoxSharp
         string where,
         string message)
     {
-        Console.Error.WriteLine($"[line {line}] Error {where}: {message}");
+        Console.Error.WriteLine(Invariant($"[line {line}] Error {where}: {message}"));
 
         HadError = true;
     }

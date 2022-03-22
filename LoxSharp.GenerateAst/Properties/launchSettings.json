@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "LoxSharp.GenerateAst": {
+      "commandName": "Project",
+      "commandLineArgs": "C:\\LoxSharp\\LoxSharp\\AbstractSyntaxTrees"
+    }
+  }
+}

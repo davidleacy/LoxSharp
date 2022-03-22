@@ -8,11 +8,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="AbstractSyntaxTrees\" />
+    <ProjectReference Include="..\LoxSharp\LoxSharp.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-	<InternalsVisibleTo Include="LoxSharp.AstPrinter" />
-  </ItemGroup>
-	
 </Project>
