@@ -28,10 +28,7 @@ internal class Scanner
         { "while",  TokenType.WHILE },
     };
 
-    public Scanner(string source)
-    {
-        Source = source;
-    }
+    public Scanner(string source) => Source = source;
 
     /// <summary>
     /// Scans/Lexs source code finding all LoxSharp tokens and returning them.
@@ -105,29 +102,15 @@ internal class Scanner
                 break;
             // Literals
             case '"': StringLiteralScan(); break;
-            case '0':
-            case '1':
-            case '2':
-            case '3':
-            case '4':
-            case '5':
-            case '6':
-            case '7':
-            case '8':
-            case '9':
+            case >= '0' and <= '9':
                 NumberLiteralScan();
                 break;
             // Reserved Words and Identifiers.
+            case (>= 'A' and <= 'Z') or (>= 'a' and <= 'z') or '_':
+                IdentifierAndKeywordScan();
+                break;
             default:
-                // This is placed in default as adding a case for each Alpha character is tedious and messy. I.e. this is a hack.
-                if (IsAlpha(c))
-                {
-                    IdentifierAndKeywordScan();
-                }
-                else
-                {
-                    LoxSharp.Error(Line, "Unexpected character.");
-                }
+                LoxSharp.Error(Line, "Unexpected character.");
                 break;
         }
     }
@@ -204,10 +187,7 @@ internal class Scanner
                 c == '_';
     }
 
-    private bool IsAlphaNumeric(char c)
-    {
-        return IsAlpha(c) || Char.IsDigit(c);
-    }
+    private bool IsAlphaNumeric(char c) => IsAlpha(c) || Char.IsDigit(c);
 
     /// <summary>
     /// Advances <see cref="Current"/> if the character matches the expected character.
@@ -263,19 +243,13 @@ internal class Scanner
     /// Returns the current character and advances the <see cref="Current"/> pointer by 1.
     /// </summary>
     /// <returns>The current character.</returns>
-    private char Advance()
-    {
-        return Source[Current++];
-    }
+    private char Advance() => Source[Current++];
 
     /// <summary>
     /// Add a token to the token list.
     /// </summary>
     /// <param name="type"><see cref="TokenType"/></param>
-    private void AddToken(TokenType type)
-    {
-        AddToken(type, null);
-    }
+    private void AddToken(TokenType type) => AddToken(type, null);
 
     /// <summary>
     /// Adds a token to the token list.
