@@ -34,7 +34,7 @@ internal class Parser
         {
             return ExpressionRule();
         }
-        catch (ParseError error)
+        catch (ParseErrorException error)
         {
             return null;
         }
@@ -219,15 +219,15 @@ internal class Parser
     }
 
     /// <summary>
-    /// When a syntax error is encountered we return a <see cref="ParseError"/> that can be dealt with by the caller.
+    /// When a syntax error is encountered we return a <see cref="ParseErrorException"/> that can be dealt with by the caller.
     /// </summary>
     /// <param name="token">The current token.</param>
     /// <param name="errorMessage">Associated error message.</param>
-    /// <returns>An instance of <see cref="ParseError"/>.</returns>
-    private ParseError Error(Token token, string errorMessage)
+    /// <returns>An instance of <see cref="ParseErrorException"/>.</returns>
+    private ParseErrorException Error(Token token, string errorMessage)
     {
         Program.Error(token, errorMessage);
-        return new ParseError(errorMessage);
+        return new ParseErrorException(errorMessage);
     }
 
     /// <summary>
