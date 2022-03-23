@@ -1,13 +1,17 @@
 ﻿namespace LoxSharp;
 
 using LoxSharp.AbstractSyntaxTrees;
+using LoxSharp.Interpreter;
 using LoxSharp.Models;
 using System.Text;
 using static System.FormattableString;
 
 public class Program
 {
+    private static readonly Interpreter.Interpreter Interpreter = new Interpreter.Interpreter();
+
     public static bool HadError { get; set; } = false;
+    public static bool HadRuntimeError { get; set; } = false;
 
     /// <summary>
     /// Main entry point to the LoxSharp interpreter.
@@ -44,6 +48,11 @@ public class Program
             // If an error occurs be good command line citizens and return an error status code.
             Environment.Exit(-65);
         }
+        else if (HadRuntimeError)
+        {
+            // If an error occurs be good command line citizens and return an error status code.
+            Environment.Exit(-70);
+        }
     }
 
     /// <summary>
@@ -78,6 +87,8 @@ public class Program
 
         // Stop if there was a syntax error.
         if (HadError) return;
+
+        Interpreter.Interpret(expression);
     }
 
     private static void Report(
@@ -104,5 +115,12 @@ public class Program
         {
             Report(token.line, " at '" + token.lexeme + "'", message);
         }
+    }
+
+    internal static void RuntimeError(RuntimeErrorException error)
+    {
+        Console.WriteLine(error.Message +
+            "\n[line " + error.Token.line + "]");
+        HadRuntimeError = true;
     }
 }
