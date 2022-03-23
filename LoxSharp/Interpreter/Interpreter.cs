@@ -52,14 +52,17 @@ internal class Interpreter : Expr.IVisitor<object?>
                     return (double)left + (double)right;
                 }
 
-                if (left is string && right is string)
+                if ((left is string && right is string) ||
+                    (left is string && right is double) ||
+                    (left is double && right is string))
                 {
-                    return (string)left + (string)right;
+                    return left.ToString() + right.ToString();
                 }
 
-                throw new RuntimeErrorException(expr.op, "Operands must be two numbers or two strings.");
+                throw new RuntimeErrorException(expr.op, "Operands must be numbers or strings.");
             case TokenType.SLASH:
-                CheckNumberOperands(expr.op, left, right);
+                CheckNumberOperand(expr.op, left);
+                CheckDenominatorIsNoZeroNumberOperand(expr.op, right);
                 return (double)left / (double)right;
             case TokenType.STAR:
                 CheckNumberOperands(expr.op, left, right);
@@ -187,6 +190,21 @@ internal class Interpreter : Expr.IVisitor<object?>
         else
         {
             throw new RuntimeErrorException(op, "Operands must be numbers.");
+        }
+    }
+
+    /// <summary>
+    /// Checks the provided operand is of type double. Throws a <see cref="RuntimeErrorException"/> if not.
+    /// </summary>
+    private void CheckDenominatorIsNoZeroNumberOperand(Token op, object? operand)
+    {
+        if (operand is double && (double)operand != 0)
+        {
+            return;
+        }
+        else
+        {
+            throw new RuntimeErrorException(op, "Dominominator must be a non-zero number.");
         }
     }
 }
