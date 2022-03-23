@@ -2,6 +2,8 @@
 
 namespace LoxSharp.AstPrinter.AbstractSyntaxTrees;
 
+using LoxSharp.Models;
+
 internal abstract class Expr
 {
     public interface IVisitor<T>

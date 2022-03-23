@@ -1,6 +1,7 @@
 ﻿namespace LoxSharp.AstPrinter;
 
 using LoxSharp.AstPrinter.AbstractSyntaxTrees;
+using LoxSharp.Models;
 using System.Text;
 
 public class AstPrinter

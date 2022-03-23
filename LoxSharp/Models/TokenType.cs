@@ -1,4 +1,4 @@
-﻿namespace LoxSharp;
+﻿namespace LoxSharp.Models;
 
 /// <summary>
 /// Represents the token type of token/lexame to speed up processing.

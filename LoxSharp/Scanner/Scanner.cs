@@ -1,7 +1,11 @@
-﻿using LoxSharp.Extensions;
+﻿namespace LoxSharp.Scanner;
 
-namespace LoxSharp.Scanner;
+using LoxSharp.Extensions;
+using LoxSharp.Models;
 
+/// <summary>
+/// The LoxSharp scanner.
+/// </summary>
 internal class Scanner
 {
     private readonly string Source;
@@ -30,6 +34,10 @@ internal class Scanner
         { "while",  TokenType.WHILE },
     };
 
+    /// <summary>
+    /// Initializes a new instance of the <see cref="Scanner"/> class.
+    /// </summary>
+    /// <param name="source">The source code to be scanned.</param>
     public Scanner(string source) => Source = source;
 
     /// <summary>
