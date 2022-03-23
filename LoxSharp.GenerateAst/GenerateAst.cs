@@ -38,6 +38,8 @@ public class GenerateAst
         writer.WriteLine();
         writer.WriteLine("namespace LoxSharp.AbstractSyntaxTrees;");
         writer.WriteLine();
+        writer.WriteLine("using LoxSharp.Models;");
+        writer.WriteLine();
         writer.WriteLine("internal abstract class " + baseName + " {");
 
         DefineVisitor(writer, baseName, types);

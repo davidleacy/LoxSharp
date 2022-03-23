@@ -1,4 +1,4 @@
-﻿namespace LoxSharp;
+﻿namespace LoxSharp.Models;
 
 /// <summary>
 /// Record representing a Token.

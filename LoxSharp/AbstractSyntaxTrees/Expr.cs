@@ -2,6 +2,8 @@
 
 namespace LoxSharp.AbstractSyntaxTrees;
 
+using LoxSharp.Models;
+
 internal abstract class Expr {
     public interface IVisitor<T> {
         public T VisitBinaryExpr(Binary expr);

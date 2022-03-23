@@ -1,5 +1,8 @@
 ﻿namespace LoxSharp.Extensions;
 
+/// <summary>
+/// Class of <see cref="string"/> extension functions.
+/// </summary>
 internal static class StringExtentions
 {
     /// <summary>

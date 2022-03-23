@@ -1,5 +1,7 @@
 ﻿namespace LoxSharp;
 
+using LoxSharp.AbstractSyntaxTrees;
+using LoxSharp.Models;
 using System.Text;
 using static System.FormattableString;
 
@@ -71,16 +73,11 @@ public class Program
         Scanner.Scanner scanner = new Scanner.Scanner(source);
         List<Token> tokens = scanner.ScanTokens();
 
-        // For now, just print the tokens.
-        foreach (Token token in tokens)
-        {
-            Console.WriteLine(token);
-        }
-    }
+        Parser.Parser parser = new Parser.Parser(tokens);
+        Expr? expression = parser.Parse();
 
-    public static void Error(int line, string message)
-    {
-        Report(line, string.Empty, message);
+        // Stop if there was a syntax error.
+        if (HadError) return;
     }
 
     private static void Report(
@@ -91,5 +88,21 @@ public class Program
         Console.Error.WriteLine(Invariant($"[line {line}] Error {where}: {message}"));
 
         HadError = true;
+    }
+    internal static void Error(int line, string message)
+    {
+        Report(line, string.Empty, message);
+    }
+
+    internal static void Error(Token token, string message)
+    {
+        if (token.type == TokenType.EOF)
+        {
+            Report(token.line, " at end", message);
+        }
+        else
+        {
+            Report(token.line, " at '" + token.lexeme + "'", message);
+        }
     }
 }
