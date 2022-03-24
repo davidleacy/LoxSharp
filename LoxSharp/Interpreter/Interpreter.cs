@@ -118,6 +118,20 @@ internal class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
 
     object? Expr.IVisitor<object?>.VisitLiteralExpr(Expr.Literal expr) => expr.value;
 
+    object? Expr.IVisitor<object?>.VisitLogicalExpr(Expr.Logical expr)
+    {
+        object? left = Evaluate(expr.left);
+
+        if (expr.op.Type == TokenType.OR) {
+            if (IsTruthy(left)) return left;
+        } else
+        {
+            if (!IsTruthy(left)) return left;
+        }
+
+        return Evaluate(expr.right);
+    }
+
     object? Expr.IVisitor<object?>.VisitUnaryExpr(Expr.Unary expr)
     {
         object? rhs = Evaluate(expr.right);
@@ -168,6 +182,28 @@ internal class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
     {
         object? value = stmt.initializer != null ? Evaluate(stmt.initializer) : null;
         Environment.Define(stmt.name, value);
+        return null;
+    }
+
+    public object? VisitIfStmt(Stmt.If stmt)
+    {
+        if (IsTruthy(Evaluate(stmt.condition)))
+        {
+            Execute(stmt.thenBranch);
+        }
+        else if (stmt.elseBranch != null)
+        {
+            Execute(stmt.elseBranch);
+        }
+        return null;
+    }
+
+    public object? VisitWhileStmt(Stmt.While stmt)
+    {
+        while (IsTruthy(Evaluate(stmt.condition)))
+        {
+            Execute(stmt.body);
+        }
         return null;
     }
 
