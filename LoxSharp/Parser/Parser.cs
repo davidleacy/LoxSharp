@@ -28,23 +28,149 @@ internal class Parser
     /// Parses the provided tokens into a syntax tree.
     /// </summary>
     /// <returns>Returns parsed Syntax tree or null if an error occured. TODO: Will change later.</returns>
-    public Expr? Parse()
+    public List<Stmt> Parse()
+    {
+        List<Stmt> statements = new List<Stmt>();
+        while (!IsAtEnd())
+        {
+            statements.Add(DeclarationRule());
+        }
+
+        return statements;
+    }
+
+    /// <summary>
+    /// Top-level statement grammer rule.
+    /// </summary>
+    /// <returns>A syntax tree representing the rule.</returns>
+    private Stmt DeclarationRule()
     {
         try
         {
-            return ExpressionRule();
+            if (Match(TokenType.VAR))
+            {
+                return VarDeclarationRule();
+            }
+
+            return StatementRule();
         }
         catch (ParseErrorException error)
         {
+            Synchronize();
             return null;
         }
+    }
+
+    /// <summary>
+    /// Variable declaration grammer rule.
+    /// </summary>
+    /// <returns>A syntax tree representing the rule.</returns>
+    private Stmt VarDeclarationRule()
+    {
+        Token name = Consume(TokenType.IDENTIFIER, "Expect variable name.");
+
+        Expr? initializer = null;
+        if (Match(TokenType.EQUAL))
+        {
+            initializer = ExpressionRule();
+        }
+
+        Consume(TokenType.SEMICOLON, "Expect ';' after variable declaration.");
+        return new Stmt.Var(name, initializer);
+    }
+
+    /// <summary>
+    /// Statement grammer rule.
+    /// </summary>
+    /// <returns>A syntax tree representing the rule.</returns>
+    private Stmt StatementRule()
+    {
+        if (Match(TokenType.PRINT))
+        {
+            return PrintStatementRule();
+        }
+        else if (Match(TokenType.LEFT_BRACE))
+        {
+            // Wrapping in the block statement outside of BlockRule os a workaround for when we parse function bodies later which would not be wrapped.
+            return new Stmt.Block(BlockRule());
+        }
+        else
+        {
+            return ExpressionStatement();
+        }
+    }
+
+    /// <summary>
+    /// Block grammer rule.
+    /// </summary>
+    /// <returns>A syntax tree representing the rule.</returns>
+    private List<Stmt> BlockRule()
+    {
+        List<Stmt> statements = new List<Stmt>();
+
+        while (!Check(TokenType.RIGHT_BRACE) && !IsAtEnd())
+        {
+            statements.Add(DeclarationRule());
+        }
+
+        Consume(TokenType.RIGHT_BRACE, "Expect '}' after block.");
+        return statements;
+    }
+
+    /// <summary>
+    /// Print statement grammer rule.
+    /// </summary>
+    /// <returns>A syntax tree representing the rule.</returns>
+    private Stmt PrintStatementRule()
+    {
+        Expr value = ExpressionRule();
+        Consume(TokenType.SEMICOLON, "Expect ';' after value.");
+        return new Stmt.Print(value);
+    }
+
+    /// <summary>
+    /// Expression statement grammer rule.
+    /// </summary>
+    /// <returns>A syntax tree representing the rule.</returns>
+    private Stmt ExpressionStatement()
+    {
+        Expr expr = ExpressionRule();
+        Consume(TokenType.SEMICOLON, "Expect ';' after expression.");
+        return new Stmt.Expression(expr);
     }
 
     /// <summary>
     /// Expression grammer rule.
     /// </summary>
     /// <returns>A syntax tree representing the rule.</returns>
-    private Expr ExpressionRule() => EqualityRule();
+    private Expr ExpressionRule() => AssignmentRule();
+
+    /// <summary>
+    /// Assignment grammer rule.
+    /// </summary>
+    /// <returns>A syntax tree representing the rule.</returns>
+    private Expr AssignmentRule()
+    {
+        Expr expr = EqualityRule();
+
+        if (Match(TokenType.EQUAL))
+        {
+            Token equals = Previous();
+            Expr value = AssignmentRule();
+
+            if (expr is Expr.Variable)
+            {
+                Token name = ((Expr.Variable)expr).name;
+                return new Expr.Assign(name, value);
+            }
+            else
+            {
+                Error(equals, "Invalid assignment target.");
+            }
+        }
+
+        return expr;
+    }
 
     /// <summary>
     /// Equality grammer rule.
@@ -114,7 +240,12 @@ internal class Parser
 
         if (Match(TokenType.NUMBER, TokenType.STRING))
         {
-            return new Expr.Literal(Previous().literal);
+            return new Expr.Literal(Previous().Literal);
+        }
+
+        if (Match(TokenType.IDENTIFIER))
+        {
+            return new Expr.Variable(Previous());
         }
 
         if (Match(TokenType.LEFT_PAREN))
@@ -163,9 +294,9 @@ internal class Parser
 
         while (!IsAtEnd())
         {
-            if (Previous().type == TokenType.SEMICOLON) return;
+            if (Previous().Type == TokenType.SEMICOLON) return;
 
-            switch (Peek().type)
+            switch (Peek().Type)
             {
                 case TokenType.CLASS:
                 case TokenType.FUN:
@@ -238,7 +369,7 @@ internal class Parser
     private bool Check(TokenType type)
     {
         if (IsAtEnd()) return false;
-        return Peek().type == type;
+        return Peek().Type == type;
     }
 
     /// <summary>
@@ -259,7 +390,7 @@ internal class Parser
     /// Checks if at end of file/token. I.e. ran out of tokens to consume.
     /// </summary>
     /// <returns><see cref="true"/> if at end of file or <see cref="false"/> if not.</returns>
-    private bool IsAtEnd() => Peek().type == TokenType.EOF;
+    private bool IsAtEnd() => Peek().Type == TokenType.EOF;
 
     /// <summary>
     /// Peeks the current token we have yet to consume without advancing the <see cref="CurrentTokenIndex"/>.
