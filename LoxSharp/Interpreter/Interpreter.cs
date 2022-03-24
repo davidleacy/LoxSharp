@@ -7,18 +7,59 @@ using LoxSharp.Models;
 /// <summary>
 /// The LoxSharp interpreter.
 /// </summary>
-internal class Interpreter : Expr.IVisitor<object?>
+internal class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
 {
-    public void Interpret(Expr expression)
+    private Environment.Environment Environment = new Environment.Environment();
+
+    public void Interpret(List<Stmt> statements)
     {
         try
         {
-            object? value = Evaluate(expression);
-            Console.WriteLine(Stringify(value));
+            foreach (Stmt statement in statements)
+            {
+                Execute(statement);
+            }
         }
         catch (RuntimeErrorException error)
         {
             Program.RuntimeError(error);
+        }
+    }
+
+    /// <summary>
+    /// Execite the given statement.
+    /// </summary>
+    /// <param name="stmt">Statement to be executed.</param>
+    private void Execute(Stmt stmt)
+    {
+        stmt.Accept(this);
+    }
+
+    /// <summary>
+    /// Execute stetements in the context of an a given environment.
+    /// </summary>
+    /// <param name="statements">Statements to execute.</param>
+    /// <param name="environment">Environment from which to execute in.</param>
+    void ExecuteBlock(
+        List<Stmt> statements,
+        Environment.Environment environment)
+    {
+        // Keep track of the previos context.
+        Environment.Environment previous = this.Environment;
+        try
+        {
+            // Use the passed context.
+            this.Environment = environment;
+
+            foreach (Stmt statement in statements)
+            {
+                Execute(statement);
+            }
+        }
+        finally
+        {
+            // We restore the environment in a finally block to ensure it is reset even after an exception is thrown.
+            this.Environment = previous;
         }
     }
 
@@ -27,7 +68,7 @@ internal class Interpreter : Expr.IVisitor<object?>
         object? left = Evaluate(expr.left);
         object? right = Evaluate(expr.right);
 
-        switch (expr.op.type)
+        switch (expr.op.Type)
         {
             case TokenType.BANG_EQUAL: return !IsEqual(left, right);
             case TokenType.EQUAL_EQUAL: return IsEqual(left, right);
@@ -81,7 +122,7 @@ internal class Interpreter : Expr.IVisitor<object?>
     {
         object? rhs = Evaluate(expr.right);
 
-        switch (expr.op.type)
+        switch (expr.op.Type)
         {
             case TokenType.MINUS:
                 CheckNumberOperand(expr.op, rhs);
@@ -93,6 +134,14 @@ internal class Interpreter : Expr.IVisitor<object?>
         // Unreachable.
         return null;
     }
+    public object? VisitAssignExpr(Expr.Assign expr)
+    {
+        object value = Evaluate(expr.value);
+        Environment.Assign(expr.name, value);
+        return value;
+    }
+
+    object? Expr.IVisitor<object?>.VisitVariableExpr(Expr.Variable expr) => Environment.Get(expr.name);
 
     /// <summary>
     /// Evaluates the given expression by recalling it's own Accept method.
@@ -101,6 +150,32 @@ internal class Interpreter : Expr.IVisitor<object?>
     /// <param name="expr">The expression to be evaluated.</param>
     /// <returns>Result value of evaluation.</returns>
     private object? Evaluate(Expr expr) => expr.Accept(this);
+
+    object? Stmt.IVisitor<object?>.VisitExpressionStmt(Stmt.Expression stmt)
+    {
+        Evaluate(stmt.expression);
+        return null;
+    }
+
+    object? Stmt.IVisitor<object?>.VisitPrintStmt(Stmt.Print stmt)
+    {
+        object? value = Evaluate(stmt.expression);
+        Console.WriteLine(Stringify(value));
+        return null;
+    }
+
+    object? Stmt.IVisitor<object?>.VisitVarStmt(Stmt.Var stmt)
+    {
+        object? value = stmt.initializer != null ? Evaluate(stmt.initializer) : null;
+        Environment.Define(stmt.name, value);
+        return null;
+    }
+
+    public object? VisitBlockStmt(Stmt.Block stmt)
+    {
+        ExecuteBlock(stmt.statements, new Environment.Environment(Environment));
+        return null;
+    }
 
     /// <summary>
     /// Determines whether a given object is truthy or falsey.
@@ -204,6 +279,7 @@ internal class Interpreter : Expr.IVisitor<object?>
         }
         else
         {
+            // TODO: Create DevideByZeroError
             throw new RuntimeErrorException(op, "Dominominator must be a non-zero number.");
         }
     }

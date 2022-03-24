@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "LoxSharp": {
+      "commandName": "Project",
+      "commandLineArgs": "C:\\LoxSharp\\LoxSharp\\SampleLoxPrograms\\LexicalScopingExample2.lox"
+    }
+  }
+}

@@ -1,0 +1,7 @@
+﻿// Demonstrates that variables of a higher scope are accessed as is until shadowed assignment takes place.
+var a = 1;
+{
+  print a;
+  var a = a + 2;
+  print a;
+}

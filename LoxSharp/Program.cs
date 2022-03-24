@@ -19,7 +19,7 @@ public class Program
     /// <param name="args"></param>
     public static void Main(string[] args)
     {
-        if (args.Length > 0)
+        if (args.Length > 1)
         {
             Console.WriteLine("Usage: LoxSharp [script]");
         }
@@ -37,21 +37,23 @@ public class Program
     /// Run a specfied file through the LoxSharp Interpreter.
     /// </summary>
     /// <param name="path">Path to the loxSharp file. (.lox)</param>
-    private static void RunFile(String path)
+    private static void RunFile(string path)
     {
-        byte[] bytes = File.ReadAllBytes(path);
+        using var stream = new FileStream(path, FileMode.Open, FileAccess.Read);
+        using var sr = new StreamReader(stream, Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
+        string source = sr.ReadToEnd();
 
-        Run(Encoding.UTF8.GetString(bytes));
+        Run(source);
 
         if (HadError)
         {
             // If an error occurs be good command line citizens and return an error status code.
-            Environment.Exit(-65);
+            System.Environment.Exit(-65);
         }
         else if (HadRuntimeError)
         {
             // If an error occurs be good command line citizens and return an error status code.
-            Environment.Exit(-70);
+            System.Environment.Exit(-70);
         }
     }
 
@@ -83,12 +85,12 @@ public class Program
         List<Token> tokens = scanner.ScanTokens();
 
         Parser.Parser parser = new Parser.Parser(tokens);
-        Expr? expression = parser.Parse();
+        List<Stmt> statements = parser.Parse();
 
         // Stop if there was a syntax error.
         if (HadError) return;
 
-        Interpreter.Interpret(expression);
+        Interpreter.Interpret(statements);
     }
 
     private static void Report(
@@ -107,20 +109,20 @@ public class Program
 
     internal static void Error(Token token, string message)
     {
-        if (token.type == TokenType.EOF)
+        if (token.Type == TokenType.EOF)
         {
-            Report(token.line, " at end", message);
+            Report(token.Line, " at end", message);
         }
         else
         {
-            Report(token.line, " at '" + token.lexeme + "'", message);
+            Report(token.Line, " at '" + token.Lexeme + "'", message);
         }
     }
 
     internal static void RuntimeError(RuntimeErrorException error)
     {
         Console.WriteLine(error.Message +
-            "\n[line " + error.Token.line + "]");
+            "\n[line " + error.Token.Line + "]");
         HadRuntimeError = true;
     }
 }

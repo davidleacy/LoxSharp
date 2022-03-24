@@ -36,7 +36,7 @@ public class AstPrinter
 
         public string VisitBinaryExpr(Expr.Binary expr)
         {
-            return Parenthesize(expr.op.lexeme,
+            return Parenthesize(expr.op.Lexeme,
                                 expr.left, expr.right);
         }
 
@@ -59,7 +59,7 @@ public class AstPrinter
 
         public string VisitUnaryExpr(Expr.Unary expr)
         {
-            return Parenthesize(expr.op.lexeme, expr.right);
+            return Parenthesize(expr.op.Lexeme, expr.right);
         }
 
         private string Parenthesize(string name, params Expr[] exprs)
