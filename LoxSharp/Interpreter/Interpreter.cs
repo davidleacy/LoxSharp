@@ -27,7 +27,7 @@ internal class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
     }
 
     /// <summary>
-    /// Execite the given statement.
+    /// Execute the given statement.
     /// </summary>
     /// <param name="stmt">Statement to be executed.</param>
     private void Execute(Stmt stmt)
@@ -62,6 +62,16 @@ internal class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
             this.Environment = previous;
         }
     }
+
+    /// <summary>
+    /// Evaluates the given expression by recalling it's own Accept method.
+    /// Works due to the visitor pattern implementation.
+    /// </summary>
+    /// <param name="expr">The expression to be evaluated.</param>
+    /// <returns>Result value of evaluation.</returns>
+    private object? Evaluate(Expr expr) => expr.Accept(this);
+
+    #region ExpressionVistorMethods
 
     object? Expr.IVisitor<object?>.VisitBinaryExpr(Expr.Binary expr)
     {
@@ -157,13 +167,9 @@ internal class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
 
     object? Expr.IVisitor<object?>.VisitVariableExpr(Expr.Variable expr) => Environment.Get(expr.name);
 
-    /// <summary>
-    /// Evaluates the given expression by recalling it's own Accept method.
-    /// Works due to the visitor pattern implementation.
-    /// </summary>
-    /// <param name="expr">The expression to be evaluated.</param>
-    /// <returns>Result value of evaluation.</returns>
-    private object? Evaluate(Expr expr) => expr.Accept(this);
+    #endregion
+
+    #region StatementVistorMethods
 
     object? Stmt.IVisitor<object?>.VisitExpressionStmt(Stmt.Expression stmt)
     {
@@ -212,6 +218,10 @@ internal class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
         ExecuteBlock(stmt.statements, new Environment.Environment(Environment));
         return null;
     }
+
+    #endregion
+
+    #region Helpers
 
     /// <summary>
     /// Determines whether a given object is truthy or falsey.
@@ -319,4 +329,5 @@ internal class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
             throw new RuntimeErrorException(op, "Dominominator must be a non-zero number.");
         }
     }
+    #endregion
 }

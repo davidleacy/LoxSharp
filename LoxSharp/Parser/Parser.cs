@@ -39,6 +39,8 @@ internal class Parser
         return statements;
     }
 
+    #region StatementGrammerRules
+
     /// <summary>
     /// Top-level statement grammer rule.
     /// </summary>
@@ -258,6 +260,10 @@ internal class Parser
         return new Stmt.Expression(expr);
     }
 
+    #endregion
+
+    #region ExpressionGrammerRules
+
     /// <summary>
     /// Expression grammer rule.
     /// </summary>
@@ -396,6 +402,9 @@ internal class Parser
 
         throw Error(Peek(), "Expect expression.");
     }
+    #endregion
+
+    #region Helpers
 
     /// <summary>
     /// Common helper method for representing a left associative binary expressions.
@@ -568,4 +577,5 @@ internal class Parser
     /// </summary>
     /// <returns>The token before the current token pointed to by <see cref="CurrentTokenIndex"/>.</returns>
     private Token Previous() => Tokens[CurrentTokenIndex - 1];
+    #endregion
 }
