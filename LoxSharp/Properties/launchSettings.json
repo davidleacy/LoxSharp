@@ -2,7 +2,7 @@
   "profiles": {
     "LoxSharp": {
       "commandName": "Project",
-      "commandLineArgs": "C:\\LoxSharp\\LoxSharp\\SampleLoxPrograms\\LexicalScopingExample2.lox"
+      "commandLineArgs": "C:\\LoxSharp\\LoxSharp\\SampleLoxPrograms\\ForLoopExample.lox"
     }
   }
 }

@@ -39,6 +39,8 @@ internal class Parser
         return statements;
     }
 
+    #region StatementGrammerRules
+
     /// <summary>
     /// Top-level statement grammer rule.
     /// </summary>
@@ -85,9 +87,21 @@ internal class Parser
     /// <returns>A syntax tree representing the rule.</returns>
     private Stmt StatementRule()
     {
-        if (Match(TokenType.PRINT))
+        if (Match(TokenType.FOR))
+        {
+            return ForStatementRule();
+        }
+        if (Match(TokenType.IF))
+        {
+            return IfStatementRule();
+        }
+        else if (Match(TokenType.PRINT))
         {
             return PrintStatementRule();
+        }
+        else if (Match(TokenType.WHILE))
+        {
+            return WhileStatementRule();
         }
         else if (Match(TokenType.LEFT_BRACE))
         {
@@ -96,8 +110,115 @@ internal class Parser
         }
         else
         {
-            return ExpressionStatement();
+            return ExpressionStatementRule();
         }
+    }
+
+    /// <summary>
+    /// If statement grammer rule.
+    /// </summary>
+    /// <returns>A syntax tree representing the rule.</returns>
+    private Stmt IfStatementRule()
+    {
+        Consume(TokenType.LEFT_PAREN, "Expect '(' after 'if'.");
+        Expr condition = ExpressionRule();
+        Consume(TokenType.RIGHT_PAREN, "Expect ')' after if condition.");
+
+        Stmt thenBranch = StatementRule();
+
+        // Check if the optional "else" branch is provided.
+        // This also leads to us always bounding an else to the nearest if
+        Stmt? elseBranch = null;
+        if (Match(TokenType.ELSE))
+        {
+            elseBranch = StatementRule();
+        }
+
+        return new Stmt.If(condition, thenBranch, elseBranch);
+    }
+
+    /// <summary>
+    /// While statement grammer rule.
+    /// </summary>
+    /// <returns>A syntax tree representing the rule.</returns>
+    private Stmt WhileStatementRule()
+    {
+        Consume(TokenType.LEFT_PAREN, "Expect '(' after 'while'.");
+        Expr condition = ExpressionRule();
+        Consume(TokenType.RIGHT_PAREN, "Expect ')' after condition.");
+        Stmt body = StatementRule();
+
+        return new Stmt.While(condition, body);
+    }
+
+    /// <summary>
+    /// If statement grammer rule.
+    /// </summary>
+    /// <returns>A syntax tree representing the rule.</returns>
+    /// <remarks>
+    /// This is an example of desuguaring where we transform a higher level construct to a more basic one
+    /// the While loop before passing to the interpreter.
+    /// </remarks>
+    private Stmt ForStatementRule()
+    {
+        Consume(TokenType.LEFT_PAREN, "Expect '(' after 'for'.");
+
+        // initializer
+        Stmt? initializer;
+        if (Match(TokenType.SEMICOLON))
+        {
+            initializer = null;
+        }
+        else if (Match(TokenType.VAR))
+        {
+            initializer = VarDeclarationRule();
+        }
+        else
+        {
+            initializer = ExpressionStatementRule();
+        }
+
+        // condition
+        Expr? condition = null;
+        if (!Check(TokenType.SEMICOLON))
+        {
+            condition = ExpressionRule();
+        }
+        Consume(TokenType.SEMICOLON, "Expect ';' after loop condition.");
+
+        // increment
+        Expr? increment = null;
+        if (!Check(TokenType.RIGHT_PAREN))
+        {
+            increment = ExpressionRule();
+        }
+        Consume(TokenType.RIGHT_PAREN, "Expect ')' after for clauses.");
+
+        // Body
+        Stmt body = StatementRule();
+
+        // Desugar to while loop.
+        if (increment != null)
+        {
+            body = new Stmt.Block(
+                new List<Stmt> {
+                    body,
+                    new Stmt.Expression(increment)
+                });
+        }
+
+        if (condition == null)
+        {
+            condition = new Expr.Literal(true);
+        }
+        body = new Stmt.While(condition, body);
+
+        if (initializer != null)
+        {
+            body = new Stmt.Block(new List<Stmt> { initializer, body });
+        }
+
+        return body;
     }
 
     /// <summary>
@@ -132,12 +253,16 @@ internal class Parser
     /// Expression statement grammer rule.
     /// </summary>
     /// <returns>A syntax tree representing the rule.</returns>
-    private Stmt ExpressionStatement()
+    private Stmt ExpressionStatementRule()
     {
         Expr expr = ExpressionRule();
         Consume(TokenType.SEMICOLON, "Expect ';' after expression.");
         return new Stmt.Expression(expr);
     }
+
+    #endregion
+
+    #region ExpressionGrammerRules
 
     /// <summary>
     /// Expression grammer rule.
@@ -151,7 +276,7 @@ internal class Parser
     /// <returns>A syntax tree representing the rule.</returns>
     private Expr AssignmentRule()
     {
-        Expr expr = EqualityRule();
+        Expr expr = OrRule();
 
         if (Match(TokenType.EQUAL))
         {
@@ -171,6 +296,26 @@ internal class Parser
 
         return expr;
     }
+
+    /// <summary>
+    /// Or grammer rule.
+    /// </summary>
+    /// <returns>A syntax tree representing the rule.</returns>
+    private Expr OrRule()
+        => CreateLeftAssociativeLogicalExpr(
+            AndRule,
+            TokenType.OR,
+            AndRule);
+
+    /// <summary>
+    /// And grammer rule.
+    /// </summary>
+    /// <returns>A syntax tree representing the rule.</returns>
+    private Expr AndRule()
+        => CreateLeftAssociativeLogicalExpr(
+            EqualityRule,
+            TokenType.AND,
+            EqualityRule);
 
     /// <summary>
     /// Equality grammer rule.
@@ -257,6 +402,9 @@ internal class Parser
 
         throw Error(Peek(), "Expect expression.");
     }
+    #endregion
+
+    #region Helpers
 
     /// <summary>
     /// Common helper method for representing a left associative binary expressions.
@@ -272,13 +420,39 @@ internal class Parser
 
         while (Match(operatorsToMatch.ToArray()))
         {
-            // Retrieve != or == operator.
+            // Retrieve operator.
             Token op = Previous();
             // Parse rhs operand.
             Expr right = rightOperandResolution();
             // Create new Binary syntax tree node.
             // By re-assigning to expr we are creating a left associative rule.
             expr = new Expr.Binary(expr, op, right);
+        }
+
+        return expr;
+    }
+
+    /// <summary>
+    /// Common helper method for representing a left associative binary expressions.
+    /// </summary>
+    /// <param name="leftOperandResolution">Rule for resolving the lhs of the binary expression.</param>
+    /// <param name="operatorsToMatch">Binary operators to match against.</param>
+    /// <param name="rightOperandResolution">Rule for resolving the rhs of the binary expression.</param>
+    /// <returns></returns>
+    private Expr CreateLeftAssociativeLogicalExpr(Func<Expr> leftOperandResolution, TokenType operatorToMatch, Func<Expr> rightOperandResolution)
+    {
+        // Parse lhs operand.
+        Expr expr = leftOperandResolution();
+
+        while (Match(operatorToMatch))
+        {
+            // Retrieve operator.
+            Token op = Previous();
+            // Parse rhs operand.
+            Expr right = rightOperandResolution();
+            // Create new Logical syntax tree node.
+            // By re-assigning to expr we are creating a left associative rule.
+            expr = new Expr.Logical(expr, op, right);
         }
 
         return expr;
@@ -403,4 +577,5 @@ internal class Parser
     /// </summary>
     /// <returns>The token before the current token pointed to by <see cref="CurrentTokenIndex"/>.</returns>
     private Token Previous() => Tokens[CurrentTokenIndex - 1];
+    #endregion
 }
