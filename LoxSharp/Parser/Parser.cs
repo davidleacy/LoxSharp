@@ -49,12 +49,15 @@ internal class Parser
     {
         try
         {
+            if (Match(TokenType.FUN)) return FunctionRule("function");
             if (Match(TokenType.VAR))
             {
                 return VarDeclarationRule();
             }
-
-            return StatementRule();
+            else
+            {
+                return StatementRule();
+            }
         }
         catch (ParseErrorException error)
         {
@@ -98,6 +101,10 @@ internal class Parser
         else if (Match(TokenType.PRINT))
         {
             return PrintStatementRule();
+        }
+        else if (Match(TokenType.RETURN))
+        {
+            return ReturnStatementRule();
         }
         else if (Match(TokenType.WHILE))
         {
@@ -250,6 +257,23 @@ internal class Parser
     }
 
     /// <summary>
+    /// Return statement grammer rule.
+    /// </summary>
+    /// <returns>A syntax tree representing the rule.</returns>
+    private Stmt ReturnStatementRule()
+    {
+        Token keyword = Previous();
+        Expr? value = null;
+        if (!Check(TokenType.SEMICOLON))
+        {
+            value = ExpressionRule();
+        }
+
+        Consume(TokenType.SEMICOLON, "Expect ';' after return value.");
+        return new Stmt.Return(keyword, value);
+    }
+
+    /// <summary>
     /// Expression statement grammer rule.
     /// </summary>
     /// <returns>A syntax tree representing the rule.</returns>
@@ -258,6 +282,38 @@ internal class Parser
         Expr expr = ExpressionRule();
         Consume(TokenType.SEMICOLON, "Expect ';' after expression.");
         return new Stmt.Expression(expr);
+    }
+
+    /// <summary>
+    /// Function statement grammer rule.
+    /// </summary>
+    /// <returns>A syntax tree representing the rule.</returns>
+    private Stmt.Function FunctionRule(String kind)
+    {
+        // Consume identifier
+        Token name = Consume(TokenType.IDENTIFIER, "Expect " + kind + " name.");
+
+        // Create parameters.
+        Consume(TokenType.LEFT_PAREN, "Expect '(' after " + kind + " name.");
+        List<Token> parameters = new List<Token>();
+        if (!Check(TokenType.RIGHT_PAREN))
+        {
+            do
+            {
+                if (parameters.Count >= 255)
+                {
+                    Error(Peek(), "Can't have more than 255 parameters.");
+                }
+
+                parameters.Add(
+                    Consume(TokenType.IDENTIFIER, "Expect parameter name."));
+            } while (Match(TokenType.COMMA));
+        }
+        Consume(TokenType.RIGHT_PAREN, "Expect ')' after parameters.");
+
+        Consume(TokenType.LEFT_BRACE, "Expect '{' before " + kind + " body.");
+        List<Stmt> body = BlockRule();
+        return new Stmt.Function(name, parameters, body);
     }
 
     #endregion
@@ -370,7 +426,56 @@ internal class Parser
             return new Expr.Unary(op, right);
         }
 
-        return PrimaryRule();
+        return CallRule();
+    }
+
+    /// <summary>
+    /// Call grammer rule.
+    /// </summary>
+    /// <returns>A syntax tree representing the rule.</returns>
+    private Expr CallRule()
+    {
+        Expr expr = PrimaryRule();
+
+        while (true)
+        {
+            // Iterate through all call expressions using the previous result as callee.
+            // Allowing for example fn(1)(2)(3)
+            if (Match(TokenType.LEFT_PAREN))
+            {
+                expr = FinishCall(expr);
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        return expr;
+    }
+
+    private Expr FinishCall(Expr callee)
+    {
+        List<Expr> arguments = new List<Expr>();
+        // First handle the zero-arguement case then parsing each comma seperated expression.
+        if (!Check(TokenType.RIGHT_PAREN))
+        {
+            do
+            {
+                // Abritrary limit to align with the C bytecode interpreter in part 3 of the book.
+                if (arguments.Count >= 255)
+                {
+                    Error(Peek(), "Can't have more than 255 arguments.");
+                }
+                arguments.Add(ExpressionRule());
+            } while (Match(TokenType.COMMA));
+        }
+
+        // Consume the right parentheses.
+        Token paren = Consume(TokenType.RIGHT_PAREN,
+                              "Expect ')' after arguments.");
+
+        return new Expr.Call(callee, paren, arguments);
     }
 
     /// <summary>

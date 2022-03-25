@@ -9,9 +9,11 @@ internal abstract class Stmt {
     public interface IVisitor<T> {
         public T VisitBlockStmt(Block stmt);
         public T VisitExpressionStmt(Expression stmt);
+        public T VisitFunctionStmt(Function stmt);
         public T VisitIfStmt(If stmt);
         public T VisitPrintStmt(Print stmt);
         public T VisitVarStmt(Var stmt);
+        public T VisitReturnStmt(Return stmt);
         public T VisitWhileStmt(While stmt);
     }
 
@@ -36,6 +38,22 @@ internal abstract class Stmt {
 
         public override T Accept<T>(IVisitor<T> visitor) {
             return visitor.VisitExpressionStmt(this);
+        }
+    }
+
+    public class Function: Stmt {
+        public readonly Token name;
+        public readonly List<Token> parameters;
+        public readonly List<Stmt> body;
+
+        public Function(Token name, List<Token> parameters, List<Stmt> body) {
+            this.name = name;
+            this.parameters = parameters;
+            this.body = body;
+        }
+
+        public override T Accept<T>(IVisitor<T> visitor) {
+            return visitor.VisitFunctionStmt(this);
         }
     }
 
@@ -78,6 +96,20 @@ internal abstract class Stmt {
 
         public override T Accept<T>(IVisitor<T> visitor) {
             return visitor.VisitVarStmt(this);
+        }
+    }
+
+    public class Return: Stmt {
+        public readonly Token keyword;
+        public readonly Expr? value;
+
+        public Return(Token keyword, Expr? value) {
+            this.keyword = keyword;
+            this.value = value;
+        }
+
+        public override T Accept<T>(IVisitor<T> visitor) {
+            return visitor.VisitReturnStmt(this);
         }
     }
 
