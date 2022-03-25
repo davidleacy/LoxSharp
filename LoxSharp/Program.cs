@@ -3,6 +3,7 @@
 using LoxSharp.AbstractSyntaxTrees;
 using LoxSharp.Interpreter;
 using LoxSharp.Models;
+using LoxSharp.Resolvers;
 using System.Text;
 using static System.FormattableString;
 
@@ -89,6 +90,11 @@ public class Program
 
         // Stop if there was a syntax error.
         if (HadError) return;
+
+        VariableResolver resolver = new VariableResolver(Interpreter);
+        resolver.Resolve(statements);
+
+        if (hadError) return;
 
         Interpreter.Interpret(statements);
     }

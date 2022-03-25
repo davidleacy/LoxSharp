@@ -57,6 +57,11 @@ internal class Environment
             "Undefined variable '" + name.Lexeme + "'.");
     }
 
+    public object? GetAt(int distance, string name)
+    {
+        return Ancestor(distance).values[name];
+    }
+
     public void Assign(Token name, object? value)
     {
         if (values.ContainsKey(name.Lexeme))
@@ -74,5 +79,18 @@ internal class Environment
 
         throw new RuntimeErrorException(name,
             "Undefined variable '" + name.Lexeme + "'.");
+    }
+
+    public void AssignAt(int distance, Token name, object? value) => Ancestor(distance).values.Add(name.Lexeme, value);
+
+    private Environment Ancestor(int distance)
+    {
+        Environment environment = this;
+        for (int i = 0; i < distance; i++)
+        {
+            environment = environment.Enclosing ?? throw new RuntimeErrorException(null, "Unexpected failure during scope resolution."); ;
+        }
+
+        return environment;
     }
 }
