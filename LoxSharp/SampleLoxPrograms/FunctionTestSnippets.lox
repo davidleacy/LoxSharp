@@ -1,0 +1,7 @@
+﻿fun sayHi(first, last) {
+  print "Hi, " + first + " " + last + "!";
+}
+
+print sayHi; // Print function name
+
+sayHi("Dear", "Reader"); // Call a function.

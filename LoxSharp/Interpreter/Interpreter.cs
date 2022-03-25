@@ -3,15 +3,27 @@
 using LoxSharp.AbstractSyntaxTrees;
 using LoxSharp.Extensions;
 using LoxSharp.Models;
+using LoxSharp.NativeFunctions;
 
 /// <summary>
 /// The LoxSharp interpreter.
 /// </summary>
 internal class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
 {
-    private Environment.Environment Environment = new Environment.Environment();
+    public readonly Environment.Environment Globals;
 
-    public void Interpret(List<Stmt> statements)
+    private Environment.Environment Environment;
+
+    public Interpreter()
+    {
+        this.Globals = new Environment.Environment();
+        this.Environment = Globals;
+
+        // Adds to 
+        this.Globals.Define(new Token(TokenType.FUN, "Clock", null, 0), new NativeClockFunction());
+    }
+
+public void Interpret(List<Stmt> statements)
     {
         try
         {
@@ -40,7 +52,7 @@ internal class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
     /// </summary>
     /// <param name="statements">Statements to execute.</param>
     /// <param name="environment">Environment from which to execute in.</param>
-    void ExecuteBlock(
+    public void ExecuteBlock(
         List<Stmt> statements,
         Environment.Environment environment)
     {
@@ -124,6 +136,32 @@ internal class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
         return null;
     }
 
+    public object? VisitCallExpr(Expr.Call expr)
+    {
+        object? callee = Evaluate(expr.callee);
+
+        List<object?> arguments = new List<object?>();
+        foreach (Expr argument in expr.arguments)
+        {
+            arguments.Add(Evaluate(argument));
+        }
+
+        if (callee is not ILoxSharpCallable) {
+            throw new RuntimeErrorException(expr.paren, "Can only call functions and classes.");
+        }
+        else
+        {
+            ILoxSharpCallable function = callee as ILoxSharpCallable;
+
+            if (arguments.Count != function.Arity())
+            {
+                throw new RuntimeErrorException(expr.paren, "Expected " + function.Arity() + " arguments but got " + arguments.Count + ".");
+            }
+
+            return function.Call(this, arguments);
+        }
+    }
+
     object? Expr.IVisitor<object?>.VisitGroupingExpr(Expr.Grouping expr) => Evaluate(expr.expression);
 
     object? Expr.IVisitor<object?>.VisitLiteralExpr(Expr.Literal expr) => expr.value;
@@ -177,11 +215,29 @@ internal class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
         return null;
     }
 
+    public object? VisitFunctionStmt(Stmt.Function stmt)
+    {
+        LoxSharpFunction function = new LoxSharpFunction(stmt, Environment);
+        Environment.Define(stmt.name, function);
+        return null;
+    }
+
     object? Stmt.IVisitor<object?>.VisitPrintStmt(Stmt.Print stmt)
     {
         object? value = Evaluate(stmt.expression);
         Console.WriteLine(Stringify(value));
         return null;
+    }
+
+    object? Stmt.IVisitor<object?>.VisitReturnStmt(Stmt.Return stmt)
+    {
+        object? value = null;
+        if (stmt.value != null)
+        {
+            value = Evaluate(stmt.value);
+        }
+
+        throw new ReturnException(value);
     }
 
     object? Stmt.IVisitor<object?>.VisitVarStmt(Stmt.Var stmt)

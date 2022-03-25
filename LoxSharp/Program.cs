@@ -122,7 +122,7 @@ public class Program
     internal static void RuntimeError(RuntimeErrorException error)
     {
         Console.WriteLine(error.Message +
-            "\n[line " + error.Token.Line + "]");
+            "\n[line " + error?.Token?.Line + "]");
         HadRuntimeError = true;
     }
 }
