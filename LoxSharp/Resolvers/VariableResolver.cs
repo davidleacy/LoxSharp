@@ -241,8 +241,7 @@ internal class VariableResolver: Expr.IVisitor<object?>, Stmt.IVisitor<object?>
         }
 
         Scopes
-            .Peek()
-            .Add(name.Lexeme, true);
+            .Peek()[name.Lexeme] = true;
     }
 
     /// <summary>
@@ -254,7 +253,7 @@ internal class VariableResolver: Expr.IVisitor<object?>, Stmt.IVisitor<object?>
     {
         // Starting from the top of the stack work our way down looking for the variable.
         // N.b. c# places new items at index zero rather than in Java where it is at the end.
-        for (int i = 0; i < Scopes.Count; i--)
+        for (int i = 0; i < Scopes.Count; i++)
         {
             if (Scopes.ElementAt(i).ContainsKey(name.Lexeme))
             {

@@ -94,7 +94,7 @@ public class Program
         VariableResolver resolver = new VariableResolver(Interpreter);
         resolver.Resolve(statements);
 
-        if (hadError) return;
+        if (HadError) return;
 
         Interpreter.Interpret(statements);
     }
