@@ -12,6 +12,10 @@ internal class Interpreter : Expr.IVisitor<object?>, Stmt.IVisitor<object?>
 {
     public readonly Environment.Environment Globals;
 
+    // Side table used to store variable resolution information from the VariableResolver pass which is used during interpretation.
+    private readonly Dictionary<Expr, int> Locals = new Dictionary<Expr, int>();
+
+
     private Environment.Environment Environment;
 
     public Interpreter()
@@ -45,6 +49,17 @@ public void Interpret(List<Stmt> statements)
     private void Execute(Stmt stmt)
     {
         stmt.Accept(this);
+    }
+
+    /// <summary>
+    /// Allows the interpreters local side table to be updates with variable resolution information.
+    /// </summary>
+    /// <param name="expr">The expression to store.</param>
+    /// <param name="depth">The depth or hops between the current environment and the environment where the interpreter can find the variables value.</param>
+    /// <remarks>Since we are storing expressions we don't need to worry about multiple expressions referencing the same variable as they will be stored seperately.</remarks>
+    public void Resolve(Expr expr, int depth)
+    {
+        Locals.Add(expr, depth);
     }
 
     /// <summary>
@@ -196,14 +211,46 @@ public void Interpret(List<Stmt> statements)
         // Unreachable.
         return null;
     }
+
     public object? VisitAssignExpr(Expr.Assign expr)
     {
-        object value = Evaluate(expr.value);
-        Environment.Assign(expr.name, value);
+        object? value = Evaluate(expr.value);
+
+        if (Locals.TryGetValue(expr, out int distance))
+        {
+            // There is implicit trust that the variable resolver has correctly calculated the distance
+            // and this is called out in the book. It makes me slightly uneasy in any case if there is a bug 
+            Environment.AssignAt(distance, expr.name, value);
+        }
+        else
+        {
+            Globals.Assign(expr.name, value);
+        }
+
         return value;
     }
 
-    object? Expr.IVisitor<object?>.VisitVariableExpr(Expr.Variable expr) => Environment.Get(expr.name);
+    object? Expr.IVisitor<object?>.VisitVariableExpr(Expr.Variable expr)
+    {
+        return LookUpVariable(expr.name, expr);
+    }
+
+    /// <summary>
+    /// Using scope information find the correct value for the the variable.
+    /// </summary>
+    private object? LookUpVariable(Token name, Expr.Variable expr)
+    {
+        if (Locals.TryGetValue(expr, out int distance))
+        {
+            // There is implicit trust that the variable resolver has correctly calculated the distance
+            // and this is called out in the book. It makes me slightly uneasy in any case if there is a bug 
+            return this.Environment.GetAt(distance, name.Lexeme);
+        }
+        else
+        {
+            return Globals.Get(name);
+        }
+    }
 
     #endregion
 
